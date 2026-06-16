@@ -21,6 +21,7 @@ export type AgentActivityStep = {
 
 export type ToolInfo = {
   name: string;
+  display_name?: string;
   category: string;
   description: string;
   status: 'active' | 'inactive' | 'error';
@@ -29,6 +30,7 @@ export type ToolInfo = {
 
 export type DashboardSettings = {
   apiBaseUrl: string;
+  agentName: string;
   modelName: string;
   theme: 'light' | 'dark';
 };

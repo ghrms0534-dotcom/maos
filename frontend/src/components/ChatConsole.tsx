@@ -1,5 +1,7 @@
-import { useState } from 'react';
-import { Activity, CheckCircle2, Circle, Loader2, Send } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Activity, CheckCircle2, Circle, Copy, Loader2, Send } from 'lucide-react';
+import ReactMarkdown, { type Components } from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 import type { ChatMessage, ToolInfo } from '../types/chat';
 
@@ -13,13 +15,45 @@ type ChatConsoleProps = {
   onSend: () => void;
 };
 
+const markdownComponents: Components = {
+  h1: ({ children }) => <h1 className="mb-2 mt-1 text-lg font-semibold">{children}</h1>,
+  h2: ({ children }) => <h2 className="mb-2 mt-3 text-base font-semibold">{children}</h2>,
+  h3: ({ children }) => <h3 className="mb-2 mt-3 text-sm font-semibold">{children}</h3>,
+  p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
+  ul: ({ children }) => <ul className="mb-2 list-disc space-y-1 pl-5 last:mb-0">{children}</ul>,
+  ol: ({ children }) => <ol className="mb-2 list-decimal space-y-1 pl-5 last:mb-0">{children}</ol>,
+  li: ({ children }) => <li className="pl-1">{children}</li>,
+  code: ({ className, children, ...props }) => {
+    const code = String(children).replace(/\n$/, '');
+    const match = /language-(\w+)/.exec(className ?? '');
+
+    if (match || code.includes('\n')) {
+      return <CodeBlock code={code} language={match?.[1] ?? 'code'} />;
+    }
+
+    return (
+      <code
+        className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[0.85em] text-slate-900 dark:bg-slate-800 dark:text-slate-100"
+        {...props}
+      >
+        {children}
+      </code>
+    );
+  },
+};
+
 export function ChatConsole({ messages, input, loading, error, tools, onInputChange, onSend }: ChatConsoleProps) {
   const [orchestratorOpen, setOrchestratorOpen] = useState(false);
+  const bottomRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ block: 'end' });
+  }, [messages, loading]);
 
   return (
-    <main className="workspace flex min-w-0 flex-col">
-      <section className="surface border-b px-6 py-4">
-        <div className="flex items-center justify-between">
+    <main className="workspace flex min-h-0 min-w-0 flex-col">
+      <section className="surface shrink-0 border-b px-5 py-3">
+        <div className="flex items-center justify-between gap-4">
           <div>
             <h2 className="text-base font-semibold">에이전트 콘솔</h2>
             <p className="text-muted text-sm">기존 FastAPI 백엔드와 Agent runner를 그대로 사용합니다.</p>
@@ -30,32 +64,44 @@ export function ChatConsole({ messages, input, loading, error, tools, onInputCha
               onClick={() => setOrchestratorOpen((current) => !current)}
             >
               <Activity size={17} aria-hidden="true" />
-              Multi MCP Orchestrator
+              멀티 MCP 오케스트레이터
             </button>
             {orchestratorOpen && (
               <div className="card absolute right-0 top-11 z-20 w-72 p-4">
                 <div className="mb-3 text-sm font-semibold">오케스트레이터 상태</div>
-                <StatusLine label="General Orchestrator" active />
-                <StatusLine label="Kubernetes Tool" active={isToolActive(tools, 'k8s')} />
-                <StatusLine label="GitHub Tool" active={isToolActive(tools, 'github')} />
-                <StatusLine label="Network Tool" active={isToolActive(tools, 'public_ip')} />
+                <StatusLine label="일반 오케스트레이터" active />
+                <StatusLine label="Kubernetes 도구" active={isToolActive(tools, 'k8s')} />
+                <StatusLine label="GitHub 도구" active={isToolActive(tools, 'github')} />
+                <StatusLine label="네트워크 도구" active={isToolActive(tools, 'public_ip')} />
               </div>
             )}
           </div>
         </div>
       </section>
 
-      <section className="flex-1 overflow-y-auto px-6 py-5">
+      <section className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
         <div className="flex w-full flex-col gap-3">
           {messages.map((message) => {
             const isUser = message.role === 'user';
             return (
               <div key={message.id} className={`flex w-full ${isUser ? 'justify-end' : 'justify-start'}`}>
-                <article className={`card max-w-[72%] px-4 py-3 ${isUser ? 'border-slate-300' : ''}`}>
+                <article
+                  className={`card min-w-[250px] max-w-[70%] break-words px-4 py-3 ${
+                    isUser ? 'border-slate-300' : ''
+                  }`}
+                >
                   <div className="text-muted mb-1 text-[11px] font-semibold uppercase">
                     {isUser ? '사용자' : '에이전트'}
                   </div>
-                  <p className="whitespace-pre-wrap text-sm leading-6">{message.content}</p>
+                  {isUser ? (
+                    <p className="whitespace-pre-wrap break-words text-sm leading-6">{message.content}</p>
+                  ) : (
+                    <div className="markdown-message break-words text-sm leading-6">
+                      <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                        {message.content}
+                      </ReactMarkdown>
+                    </div>
+                  )}
                 </article>
               </div>
             );
@@ -75,10 +121,11 @@ export function ChatConsole({ messages, input, loading, error, tools, onInputCha
               {error}
             </div>
           )}
+          <div ref={bottomRef} />
         </div>
       </section>
 
-      <section className="surface border-t p-4">
+      <section className="surface shrink-0 border-t p-4">
         <div className="flex w-full gap-3">
           <input
             className="field h-11 flex-1 rounded border px-4 text-sm"
@@ -102,6 +149,35 @@ export function ChatConsole({ messages, input, loading, error, tools, onInputCha
         </div>
       </section>
     </main>
+  );
+}
+
+function CodeBlock({ code, language }: { code: string; language: string }) {
+  const [copied, setCopied] = useState(false);
+  const label = language ? language[0].toUpperCase() + language.slice(1) : 'Code';
+
+  async function handleCopy() {
+    await navigator.clipboard.writeText(code);
+    setCopied(true);
+    window.setTimeout(() => setCopied(false), 1400);
+  }
+
+  return (
+    <div className="my-3 overflow-hidden rounded-lg border border-slate-700 bg-slate-950 text-slate-100">
+      <div className="flex h-10 items-center justify-between border-b border-slate-800 bg-slate-900 px-4 text-xs">
+        <span className="font-medium text-slate-300">{label}</span>
+        <button
+          className="flex items-center gap-1 rounded px-2 py-1 text-slate-300 hover:bg-slate-800 hover:text-white"
+          onClick={() => void handleCopy()}
+        >
+          <Copy size={13} aria-hidden="true" />
+          {copied ? '복사됨' : '복사'}
+        </button>
+      </div>
+      <pre className="overflow-x-auto p-4 text-[13px] leading-6">
+        <code className="font-mono">{code}</code>
+      </pre>
+    </div>
   );
 }
 

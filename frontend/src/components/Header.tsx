@@ -12,13 +12,13 @@ type HeaderProps = {
 
 export function Header({ apiStatus, settings, toolsLoaded }: HeaderProps) {
   return (
-    <header className="surface flex h-16 items-center justify-between border-b px-6">
+    <header className="surface flex h-16 shrink-0 items-center justify-between border-b px-6">
       <div className="flex items-center gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded bg-ink text-white">
           <Bot size={22} aria-hidden="true" />
         </div>
         <div>
-          <h1 className="text-lg font-semibold">Pydantic AI Agent Dashboard</h1>
+          <h1 className="text-lg font-semibold">Pydantic AI Agent 대시보드</h1>
           <p className="text-muted text-sm">로컬 LLM, MCP Router, FastAPI 오케스트레이션</p>
         </div>
       </div>

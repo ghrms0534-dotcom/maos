@@ -40,10 +40,7 @@ function loadSessions(): ChatSession[] {
 
 function titleFromMessages(messages: ChatMessage[]): string {
   const firstUserMessage = messages.find((message) => message.role === 'user');
-  if (!firstUserMessage) {
-    return '새 대화';
-  }
-  return firstUserMessage.content.slice(0, 42) || '새 대화';
+  return firstUserMessage?.content.slice(0, 42) || '새 대화';
 }
 
 function App() {
@@ -54,7 +51,7 @@ function App() {
     const storedSessionId = localStorage.getItem(CURRENT_SESSION_KEY);
     return sessions.some((session) => session.id === storedSessionId) ? storedSessionId ?? '' : sessions[0]?.id ?? '';
   });
-  const [activeView, setActiveView] = useState<SidebarView>('chat');
+  const [activeView, setActiveView] = useState<SidebarView>('trace');
   const [tools, setTools] = useState<ToolInfo[]>([]);
   const [toolsError, setToolsError] = useState<string | null>(null);
   const [activity, setActivity] = useState<AgentActivityStep[]>([]);
@@ -103,7 +100,7 @@ function App() {
       .catch((requestError) => {
         if (mounted) {
           setTools([]);
-          setToolsError(requestError instanceof Error ? requestError.message : 'Failed to load tools.');
+          setToolsError(requestError instanceof Error ? requestError.message : '도구 목록을 불러오지 못했습니다.');
         }
       });
 
@@ -138,8 +135,8 @@ function App() {
     setError(null);
     setLoading(true);
     setActivity([
-      { label: '요청 수신', description: '사용자 메시지를 대시보드에 추가했습니다.', status: 'complete' },
-      { label: 'Backend API 호출', description: `${settings.apiBaseUrl}/api/chat/stream`, status: 'active' },
+      { label: '요청 수신', description: '사용자 메시지를 대화에 추가했습니다.', status: 'complete' },
+      { label: '백엔드 API 호출', description: `${settings.apiBaseUrl}/api/chat/stream`, status: 'active' },
     ]);
 
     const userMessage: ChatMessage = {
@@ -181,44 +178,43 @@ function App() {
     setInput('');
     setError(null);
     setActivity([]);
-    setActiveView('chat');
   }
 
   function handleRestoreSession(sessionId: string) {
     setCurrentSessionId(sessionId);
     setInput('');
     setError(null);
-    setActiveView('chat');
   }
 
   return (
-    <div className="app-bg min-h-screen">
-      <Header apiStatus={apiStatus} settings={settings} toolsLoaded={tools.length} />
-
-      <div className="grid h-[calc(100vh-4rem)] grid-cols-[240px_minmax(0,1fr)_320px]">
-        <Sidebar
-          activeView={activeView}
-          sessions={sessions}
-          currentSessionId={currentSessionId}
-          settings={settings}
-          tools={tools}
-          activity={activity}
-          toolsError={toolsError}
-          onViewChange={setActiveView}
-          onNewChat={handleNewChat}
-          onRestoreSession={handleRestoreSession}
-          onSettingsChange={setSettings}
-        />
-        <ChatConsole
-          messages={messages}
-          input={input}
-          loading={loading}
-          error={error}
-          onInputChange={setInput}
-          onSend={() => void handleSend()}
-          tools={tools}
-        />
-        <RightPanel settings={settings} tools={tools} activity={activity} />
+    <div className="app-bg flex h-screen overflow-hidden">
+      <div className="flex min-h-0 w-full flex-col">
+        <Header apiStatus={apiStatus} settings={settings} toolsLoaded={tools.length} />
+        <div className="grid min-h-0 flex-1 grid-cols-[240px_minmax(0,1fr)_320px]">
+          <Sidebar
+            activeView={activeView}
+            sessions={sessions}
+            currentSessionId={currentSessionId}
+            settings={settings}
+            tools={tools}
+            activity={activity}
+            toolsError={toolsError}
+            onViewChange={setActiveView}
+            onNewChat={handleNewChat}
+            onRestoreSession={handleRestoreSession}
+            onSettingsChange={setSettings}
+          />
+          <ChatConsole
+            messages={messages}
+            input={input}
+            loading={loading}
+            error={error}
+            tools={tools}
+            onInputChange={setInput}
+            onSend={() => void handleSend()}
+          />
+          <RightPanel settings={settings} tools={tools} />
+        </div>
       </div>
     </div>
   );

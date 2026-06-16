@@ -33,9 +33,10 @@ export function StatusPill({ status, settings, toolsLoaded }: StatusPillProps) {
       {open && (
         <div className="card absolute right-0 top-11 z-20 w-72 p-4">
           <div className="mb-3 text-sm font-semibold">API 상태 상세</div>
-          <StatusRow label="Backend" value={backend} />
-          <StatusRow label="API Base URL" value={settings.apiBaseUrl} />
-          <StatusRow label="모델" value={settings.modelName} />
+          <StatusRow label="백엔드" value={backend} />
+          <StatusRow label="API 기본 URL" value={settings.apiBaseUrl} />
+          <StatusRow label="에이전트" value={settings.agentName} />
+          <StatusRow label="AI 모델" value={settings.modelName} />
           <StatusRow label="로드된 도구" value={`${toolsLoaded}`} />
         </div>
       )}

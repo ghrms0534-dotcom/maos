@@ -1,4 +1,5 @@
 import type { AgentActivityStep, ToolInfo } from '../types/chat';
+import { addToolDisplay } from '../utils/toolDisplay';
 
 export type ChatRequest = {
   message: string;
@@ -37,7 +38,7 @@ export async function fetchTools(apiBaseUrl: string): Promise<ToolInfo[]> {
   }
 
   const data = (await response.json()) as { tools?: ToolInfo[] };
-  return data.tools ?? [];
+  return (data.tools ?? []).map(addToolDisplay);
 }
 
 export async function sendChat(message: string, apiBaseUrl: string, modelName?: string): Promise<ChatResponse> {
