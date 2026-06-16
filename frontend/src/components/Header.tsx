@@ -1,13 +1,16 @@
 import { Bot } from 'lucide-react';
 
 import type { ApiStatus } from '../api/client';
+import type { DashboardSettings } from '../types/chat';
 import { StatusPill } from './StatusPill';
 
 type HeaderProps = {
   apiStatus: ApiStatus;
+  settings: DashboardSettings;
+  toolsLoaded: number;
 };
 
-export function Header({ apiStatus }: HeaderProps) {
+export function Header({ apiStatus, settings, toolsLoaded }: HeaderProps) {
   return (
     <header className="surface flex h-16 items-center justify-between border-b px-6">
       <div className="flex items-center gap-3">
@@ -16,10 +19,10 @@ export function Header({ apiStatus }: HeaderProps) {
         </div>
         <div>
           <h1 className="text-lg font-semibold">Pydantic AI Agent Dashboard</h1>
-          <p className="text-muted text-sm">Local LLM, MCP Router, FastAPI orchestration</p>
+          <p className="text-muted text-sm">로컬 LLM, MCP Router, FastAPI 오케스트레이션</p>
         </div>
       </div>
-      <StatusPill status={apiStatus} />
+      <StatusPill status={apiStatus} settings={settings} toolsLoaded={toolsLoaded} />
     </header>
   );
 }

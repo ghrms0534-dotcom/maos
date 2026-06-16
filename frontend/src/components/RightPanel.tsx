@@ -12,25 +12,28 @@ type RightPanelProps = {
 export function RightPanel({ settings, tools, activity }: RightPanelProps) {
   return (
     <aside className="surface overflow-y-auto border-l p-5">
-      <Panel title="Agent Info">
-        <InfoRow label="Model" value={settings.modelName} />
-        <InfoRow label="Framework" value="pydantic-ai" />
-        <InfoRow label="Status" value="Active" />
+      <Panel title="에이전트 정보">
+        <InfoRow label="모델" value={settings.modelName} />
+        <InfoRow label="프레임워크" value="pydantic-ai" />
+        <InfoRow label="상태" value="활성화" />
       </Panel>
 
-      <Panel title="Available Tools">
+      <Panel title="사용 가능한 도구">
         <div className="space-y-2">
           {tools.map((tool) => (
             <div key={tool.name} className="card-subtle flex items-center justify-between gap-3 px-3 py-2">
               <span className="truncate text-sm">{tool.name}</span>
-              <ToolStatus status={tool.status} />
+              <span className="flex shrink-0 items-center gap-1 text-xs">
+                <ToolStatus status={tool.status} />
+                {tool.status === 'active' ? '사용 가능' : '확인 필요'}
+              </span>
             </div>
           ))}
-          {tools.length === 0 && <div className="text-muted text-sm">No tools loaded.</div>}
+          {tools.length === 0 && <div className="text-muted text-sm">불러온 도구가 없습니다.</div>}
         </div>
       </Panel>
 
-      <Panel title="Agent Activity">
+      <Panel title="에이전트 활동">
         <div className="space-y-3">
           {activity.map((step, index) => (
             <div key={`${step.label}-${index}`} className="flex gap-3">
@@ -47,7 +50,7 @@ export function RightPanel({ settings, tools, activity }: RightPanelProps) {
               </div>
             </div>
           ))}
-          {activity.length === 0 && <div className="text-muted text-sm">No active activity.</div>}
+          {activity.length === 0 && <div className="text-muted text-sm">현재 진행 중인 활동이 없습니다.</div>}
         </div>
       </Panel>
     </aside>

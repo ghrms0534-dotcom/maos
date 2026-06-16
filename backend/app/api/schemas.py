@@ -3,6 +3,7 @@
 
 class ChatRequest(BaseModel):
     message: str
+    model: str | None = None
 
 
 class ChatResponse(BaseModel):

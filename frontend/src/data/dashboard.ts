@@ -6,16 +6,16 @@ export const starterMessages: ChatMessage[] = [
   {
     id: 'welcome',
     role: 'agent',
-    content: 'Pydantic AI Agent Dashboard is ready. Ask about Kubernetes, GitHub, or network status.',
+    content: 'Pydantic AI Agent 대시보드가 준비되었습니다. Kubernetes, GitHub, 네트워크 상태 등을 물어보세요.',
   },
 ];
 
 export const navigationItems = [
-  { id: 'chat', label: 'Chat', icon: MessageSquare },
-  { id: 'tools', label: 'Tools', icon: Wrench },
-  { id: 'trace', label: 'Agent Activity', icon: BrainCircuit },
-  { id: 'history', label: 'History', icon: History },
-  { id: 'settings', label: 'Settings', icon: Settings },
+  { id: 'chat', label: '채팅', icon: MessageSquare },
+  { id: 'tools', label: '도구', icon: Wrench },
+  { id: 'trace', label: '에이전트 활동', icon: BrainCircuit },
+  { id: 'history', label: '대화 기록', icon: History },
+  { id: 'settings', label: '설정', icon: Settings },
 ];
 
 export const defaultSettings: DashboardSettings = {

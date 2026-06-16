@@ -1,6 +1,10 @@
 ﻿from typing import Any
 
-from backend.app.agent.language_guard import contains_blocked_cjk, ensure_korean_only_answer
+from backend.app.agent.language_guard import (
+    contains_awkward_mixed_language,
+    contains_blocked_cjk,
+    ensure_natural_korean_answer,
+)
 from backend.app.agent.output_guard import (
     build_raw_output_fallback,
     build_summarize_prompt,
@@ -13,6 +17,10 @@ from backend.app.agents.local_agent import run_local_agent
 RETRY_KOREAN_ONLY_INSTRUCTION = (
     "주의: 방금 답변에 중국어 또는 일본어가 섞였다. "
     "이번 답변은 반드시 자연스러운 한국어로만 작성해."
+)
+RETRY_NATURAL_KOREAN_INSTRUCTION = (
+    "주의: 방금 답변에 어색한 한영 혼합 표현이 섞였다. "
+    "기술 고유명사를 제외하고 이번 답변은 자연스러운 한국어 문장으로만 다시 작성해."
 )
 
 
@@ -41,12 +49,17 @@ async def _ensure_not_raw_output(message: str, answer: str) -> str:
 
 
 async def _ensure_korean_only(message: str, answer: str) -> str:
-    if not contains_blocked_cjk(answer):
+    if not contains_blocked_cjk(answer) and not contains_awkward_mixed_language(answer):
         return answer
 
-    retry_message = f"{message}\n\n{RETRY_KOREAN_ONLY_INSTRUCTION}"
+    instruction = (
+        RETRY_KOREAN_ONLY_INSTRUCTION
+        if contains_blocked_cjk(answer)
+        else RETRY_NATURAL_KOREAN_INSTRUCTION
+    )
+    retry_message = f"{message}\n\n{instruction}"
     retry_answer = _clean_answer(await _call_agent_once(retry_message))
-    return ensure_korean_only_answer(retry_answer)
+    return ensure_natural_korean_answer(retry_answer)
 
 
 def _clean_answer(answer: Any) -> str:

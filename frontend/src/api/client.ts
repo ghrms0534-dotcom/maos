@@ -2,6 +2,7 @@ import type { AgentActivityStep, ToolInfo } from '../types/chat';
 
 export type ChatRequest = {
   message: string;
+  model?: string;
 };
 
 export type ChatResponse = {
@@ -32,25 +33,25 @@ export async function checkHealth(apiBaseUrl: string): Promise<boolean> {
 export async function fetchTools(apiBaseUrl: string): Promise<ToolInfo[]> {
   const response = await fetch(`${apiBaseUrl}/tools`);
   if (!response.ok) {
-    throw new Error(`Tools request failed with status ${response.status}`);
+    throw new Error(`도구 목록 요청에 실패했습니다. 상태 코드: ${response.status}`);
   }
 
   const data = (await response.json()) as { tools?: ToolInfo[] };
   return data.tools ?? [];
 }
 
-export async function sendChat(message: string, apiBaseUrl: string): Promise<ChatResponse> {
+export async function sendChat(message: string, apiBaseUrl: string, modelName?: string): Promise<ChatResponse> {
   const response = await fetch(`${apiBaseUrl}/api/chat`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ message } satisfies ChatRequest),
+    body: JSON.stringify({ message, model: modelName } satisfies ChatRequest),
   });
 
   if (!response.ok) {
     const text = await response.text();
-    throw new Error(text || `Request failed with status ${response.status}`);
+    throw new Error(text || `요청에 실패했습니다. 상태 코드: ${response.status}`);
   }
 
   return (await response.json()) as ChatResponse;
@@ -59,6 +60,7 @@ export async function sendChat(message: string, apiBaseUrl: string): Promise<Cha
 export async function streamChat(
   message: string,
   apiBaseUrl: string,
+  modelName: string,
   onActivity: (step: AgentActivityStep) => void,
 ): Promise<ChatResponse> {
   const response = await fetch(`${apiBaseUrl}/api/chat/stream`, {
@@ -66,11 +68,11 @@ export async function streamChat(
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ message } satisfies ChatRequest),
+    body: JSON.stringify({ message, model: modelName } satisfies ChatRequest),
   });
 
   if (!response.ok || !response.body) {
-    return sendChat(message, apiBaseUrl);
+    return sendChat(message, apiBaseUrl, modelName);
   }
 
   const reader = response.body.getReader();
@@ -108,5 +110,5 @@ export async function streamChat(
     }
   }
 
-  throw new Error('Agent stream ended without an answer.');
+  throw new Error('에이전트 스트림이 답변 없이 종료되었습니다.');
 }

@@ -15,7 +15,7 @@ const CURRENT_SESSION_KEY = 'pydantic-ai-dashboard:current-session';
 function createSession(): ChatSession {
   return {
     id: crypto.randomUUID(),
-    title: 'New Chat',
+    title: '새 대화',
     messages: starterMessages,
     updatedAt: Date.now(),
   };
@@ -41,9 +41,9 @@ function loadSessions(): ChatSession[] {
 function titleFromMessages(messages: ChatMessage[]): string {
   const firstUserMessage = messages.find((message) => message.role === 'user');
   if (!firstUserMessage) {
-    return 'New Chat';
+    return '새 대화';
   }
-  return firstUserMessage.content.slice(0, 42) || 'New Chat';
+  return firstUserMessage.content.slice(0, 42) || '새 대화';
 }
 
 function App() {
@@ -138,8 +138,8 @@ function App() {
     setError(null);
     setLoading(true);
     setActivity([
-      { label: 'Request received', description: 'User message queued in the dashboard.', status: 'complete' },
-      { label: 'Backend API called', description: `${settings.apiBaseUrl}/api/chat/stream`, status: 'active' },
+      { label: '요청 수신', description: '사용자 메시지를 대시보드에 추가했습니다.', status: 'complete' },
+      { label: 'Backend API 호출', description: `${settings.apiBaseUrl}/api/chat/stream`, status: 'active' },
     ]);
 
     const userMessage: ChatMessage = {
@@ -151,7 +151,7 @@ function App() {
     updateCurrentSession(nextMessages);
 
     try {
-      const response = await streamChat(message, settings.apiBaseUrl, (step) => {
+      const response = await streamChat(message, settings.apiBaseUrl, settings.modelName, (step) => {
         setActivity((current) => [...current, step]);
       });
       const agentMessage: ChatMessage = {
@@ -162,13 +162,13 @@ function App() {
       updateCurrentSession([...nextMessages, agentMessage]);
       setActivity((current) => [
         ...current,
-        { label: 'Response received', description: 'Backend returned an agent response.', status: 'complete' },
-        { label: 'Request completed', description: 'Message saved to local chat history.', status: 'complete' },
+        { label: '응답 수신', description: '백엔드가 에이전트 응답을 반환했습니다.', status: 'complete' },
+        { label: '요청 완료', description: '대화가 브라우저 기록에 저장되었습니다.', status: 'complete' },
       ]);
     } catch (requestError) {
-      const text = requestError instanceof Error ? requestError.message : 'Agent request failed.';
+      const text = requestError instanceof Error ? requestError.message : '에이전트 요청에 실패했습니다.';
       setError(text);
-      setActivity((current) => [...current, { label: 'Request failed', description: text, status: 'error' }]);
+      setActivity((current) => [...current, { label: '요청 실패', description: text, status: 'error' }]);
     } finally {
       setLoading(false);
     }
@@ -193,7 +193,7 @@ function App() {
 
   return (
     <div className="app-bg min-h-screen">
-      <Header apiStatus={apiStatus} />
+      <Header apiStatus={apiStatus} settings={settings} toolsLoaded={tools.length} />
 
       <div className="grid h-[calc(100vh-4rem)] grid-cols-[240px_minmax(0,1fr)_320px]">
         <Sidebar
@@ -216,6 +216,7 @@ function App() {
           error={error}
           onInputChange={setInput}
           onSend={() => void handleSend()}
+          tools={tools}
         />
         <RightPanel settings={settings} tools={tools} activity={activity} />
       </div>
