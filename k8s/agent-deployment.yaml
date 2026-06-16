@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pydantic-ai-agent
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pydantic-ai-agent
+  template:
+    metadata:
+      labels:
+        app: pydantic-ai-agent
+    spec:
+      containers:
+        - name: pydantic-ai-agent
+          image: pydantic-ai-agent:local
+          imagePullPolicy: Never
+          env:
+            - name: OLLAMA_BASE_URL
+              value: "http://host.docker.internal:11434"
+            - name: OLLAMA_MODEL
+              value: "qwen2.5:3b"

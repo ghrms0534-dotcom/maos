@@ -1,0 +1,59 @@
+﻿from typing import Any
+
+from backend.app.agent.language_guard import contains_blocked_cjk, ensure_korean_only_answer
+from backend.app.agent.output_guard import (
+    build_raw_output_fallback,
+    build_summarize_prompt,
+    looks_like_raw_tool_output,
+    stringify_tool_result,
+)
+from backend.app.agents.local_agent import run_local_agent
+
+
+RETRY_KOREAN_ONLY_INSTRUCTION = (
+    "주의: 방금 답변에 중국어 또는 일본어가 섞였다. "
+    "이번 답변은 반드시 자연스러운 한국어로만 작성해."
+)
+
+
+async def _call_agent_once(message: str) -> Any:
+    return await run_local_agent(message)
+
+
+async def _summarize_raw_output_once(message: str, raw_output: str) -> str:
+    summarize_prompt = build_summarize_prompt(original_message=message, raw_output=raw_output)
+    return stringify_tool_result(await _call_agent_once(summarize_prompt))
+
+
+async def _ensure_not_raw_output(message: str, answer: str) -> str:
+    if not looks_like_raw_tool_output(answer):
+        return answer
+
+    try:
+        summarized_answer = _clean_answer(await _summarize_raw_output_once(message, answer))
+    except Exception:
+        return build_raw_output_fallback(answer)
+
+    if not summarized_answer or looks_like_raw_tool_output(summarized_answer):
+        return build_raw_output_fallback(answer)
+
+    return summarized_answer
+
+
+async def _ensure_korean_only(message: str, answer: str) -> str:
+    if not contains_blocked_cjk(answer):
+        return answer
+
+    retry_message = f"{message}\n\n{RETRY_KOREAN_ONLY_INSTRUCTION}"
+    retry_answer = _clean_answer(await _call_agent_once(retry_message))
+    return ensure_korean_only_answer(retry_answer)
+
+
+def _clean_answer(answer: Any) -> str:
+    return stringify_tool_result(answer).strip()
+
+
+async def run_agent(message: str) -> str:
+    answer = _clean_answer(await _call_agent_once(message))
+    answer = await _ensure_not_raw_output(message, answer)
+    return await _ensure_korean_only(message, answer)
